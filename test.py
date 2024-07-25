@@ -244,7 +244,7 @@ def inline_query(query: InlineQuery):
             "description": "برای لینک گوگل کلیک کنید",
             "thumbnail": "https://i.imgur.com/PFkq3hZ.jpg",
             "message": """کاربر عزیز شما میتوانید با استفاده از لینک زیر وارد شوید
-<a href='google.com'>google</a>""",
+            <a href='google.com'>google</a>""",
         },
         {
             "id": "2",
