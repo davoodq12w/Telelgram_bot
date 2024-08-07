@@ -8,6 +8,8 @@ from telebot.types import InlineQueryResultArticle, InputTextMessageContent, Inl
 TK = config('token')
 bot = telebot.TeleBot(TK)
 
+database = {}
+
 
 def is_admin(message: Message, user_id: int):
     if user_id in [admin.user.id for admin in bot.get_chat_administrators(message.chat.id)]:
@@ -269,6 +271,53 @@ def inline_query(query: InlineQuery):
         )
         results.append(result)
     bot.answer_inline_query(query.id, results)
+
+
+class Timer:
+    def __init__(self, message: Message):
+        self.message = message
+        self.flag = False
+        self.m = None
+
+    def finish(self):
+        self.flag = False
+        database.pop(self.message.chat.id)
+        bot.reply_to(self.message, "تایمر متوقف شد")
+
+    def start(self, time: int):
+        self.m = bot.reply_to(self.message, f" تایمر با {time} ثانیه شروع شد ")
+        self.flag = True
+        while self.flag:
+            sleep(time)
+            bot.delete_message(self.message.chat.id, self.m.id)
+            self.m = bot.send_message(self.message.chat.id, f"{time} ثانیه گذشت ")
+        bot.delete_message(self.message.chat.id, self.m.id)
+
+
+@bot.message_handler(chat_types=["supergroup"], func=lambda m: m.text.startswith("تایمر") or m.text == "پایان")
+def timer(message: Message):
+    if not is_admin(message, message.from_user.id):
+        return
+
+    if message.text == "پایان":
+        try:
+            timer_obj = database[message.chat.id]
+        except:
+            return
+        timer_obj.finish()
+        return
+
+    elif message.text.startswith("تایمر"):
+        try:
+            count = message.text.split()[-1]
+            count = int(count) * 1
+        except:
+            bot.reply_to(message,
+                         "لطفا ابتدا کلمه ی تایمر و سپس بعد از یک اسپیس(جای خالی) عدد مورد نظر را(برحسب ثانیه) وارد کنید \n مثال: تایمر 10")
+            return
+        timer_obj = Timer(message)
+        database.update({message.chat.id: timer_obj})
+        timer_obj.start(count)
 
 
 bot.infinity_polling()
